@@ -81,20 +81,28 @@ int main() {
     glfwSetCursorPosCallback(window, InputManager::mouseCallback);
     glfwSetScrollCallback(window, InputManager::scrollCallback);
 
-    // Declare and initialize the scale factor for outlines
-	float scale = 1.1f;
+    // Time tracking variables for rotation
+    float lastFrame = 0.0f;
+    float angle = 0.0f;  // Store the current rotation angle
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
-        // Input handling
+        // Calculate deltaTime (time between frames)
         float currentFrame = static_cast<float>(glfwGetTime());
+        float deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        // Update the rotation angle based on deltaTime
+        angle += 50.0f * deltaTime;  // Rotate 50 degrees per second
+        if (angle > 360.0f) angle -= 360.0f;
+
+        // Process input...
         inputManager.processInput(window, currentFrame);
 
-        // Clear buffers
+        // Clear buffers...
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        // Render Skybox
-        glDepthFunc(GL_LEQUAL);  // Change depth function so depth test passes when values are equal to depth buffer's content
+        // Render Skybox...
         skyboxShader.use();
         glm::mat4 view = glm::mat4(glm::mat3(camera.getViewMatrix())); // Remove translation from the view matrix
         glm::mat4 projection = camera.getProjectionMatrix(800, 600);
@@ -103,82 +111,59 @@ int main() {
         skybox.draw(skyboxShader);
         glDepthFunc(GL_LESS); // Reset depth function
 
-        // Stencil test rendering
-        glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set stencil buffer to always write 1
-        glStencilMask(0xFF); // Enable writing to the stencil buffer
+        // First pass: Render models normally with stencil buffer update
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);  // Set any fragment to 1 in the stencil buffer
+        glStencilMask(0xFF);  // Enable writing to the stencil buffer
 
-        // Render models normally
         modelShader.use();
         modelShader.setMat4("projection", projection);
         modelShader.setMat4("view", camera.getViewMatrix());
 
+        // Tree (rotating)
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));  // Rotating object
         modelShader.setMat4("model", model);
         tree.draw(modelShader);
 
-        // Rotate the tree model to satisfy the rotation requirement
-        static float angle = 0.0f;
-        angle += 50.0f * currentFrame; // Rotate 50 degrees per second
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-        modelShader.setMat4("model", model);
-        tree.draw(modelShader);
-
-        // Render other models
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-3.0f, 0.0f, -2.0f));
-        modelShader.setMat4("model", model);
+        // Other models...
+        glm::mat4 crystalModel = glm::translate(glm::mat4(1.0f), glm::vec3(-3.0f, 0.0f, -2.0f));
+        modelShader.setMat4("model", crystalModel);
         crystal.draw(modelShader);
 
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 2.0f));
-        modelShader.setMat4("model", model);
-        gemLarge.draw(modelShader);
-
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 4.0f));
-        modelShader.setMat4("model", model);
-        gemSpike.draw(modelShader);
-
-        // Outline pass
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // Render where stencil buffer is not 1
-        glStencilMask(0x00); // Disable writing to the stencil buffer
-        glDisable(GL_DEPTH_TEST); // Disable depth test for the outline pass
+        // Second pass: Render the outlines using the stencil buffer
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);  // Render where stencil buffer is not 1
+        glStencilMask(0x00);  // Disable writing to the stencil buffer
+        glDisable(GL_DEPTH_TEST);  // Disable depth testing to ensure outline is drawn over everything
 
         outlineShader.use();
         outlineShader.setMat4("projection", projection);
         outlineShader.setMat4("view", camera.getViewMatrix());
 
+        float outlineScale = 2.0f;  // Slightly increase the scale to make the outline more visible
+
         // Draw the outline for the rotating tree
-        scale = 1.1f;
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));  // Apply the same rotation
+        model = glm::scale(model, glm::vec3(outlineScale, outlineScale, outlineScale));  // Scale the model to create the outline
         outlineShader.setMat4("model", model);
         tree.draw(outlineShader);
 
-        // Draw the outline for other models
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-3.0f, 0.0f, -2.0f));
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
-        outlineShader.setMat4("model", model);
+        // Draw the outline for the other models
+        crystalModel = glm::scale(crystalModel, glm::vec3(outlineScale, outlineScale, outlineScale));
+        outlineShader.setMat4("model", crystalModel);
         crystal.draw(outlineShader);
 
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, 2.0f));
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
-        outlineShader.setMat4("model", model);
-        gemLarge.draw(outlineShader);
-
-        model = glm::translate(glm::mat4(1.0f), glm::vec3(-1.0f, 0.0f, 4.0f));
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
-        outlineShader.setMat4("model", model);
-        gemSpike.draw(outlineShader);
-
-        // Reset state for next pass
-        glStencilMask(0xFF);
-        glEnable(GL_DEPTH_TEST);
+        // Reset stencil and depth testing for next frame
+        glStencilMask(0xFF);  // Enable writing to the stencil buffer again
+        glEnable(GL_DEPTH_TEST);  // Enable depth testing again
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 
     // Cleanup
     glfwTerminate();
