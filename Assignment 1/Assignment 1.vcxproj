@@ -160,6 +160,7 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Skybox.cpp" />
+    <ClCompile Include="src\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\heightmap\Heightmap0.raw" />
@@ -182,6 +183,7 @@
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\Skybox.h" />
+    <ClInclude Include="include\Terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\heightmap\Heightmap0.jpg" />

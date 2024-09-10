@@ -6,17 +6,18 @@
 #include <glm.hpp>
 #include <vector>
 
-class Skybox {
+class Skybox
+{
 public:
-    explicit Skybox(const std::vector<std::string>& faces);
+	explicit Skybox(const std::vector<std::string>& Faces);
 
-    void draw(const Shader& shader) const;
+	void draw(const Shader& Shader) const;
 
 private:
-    void setupSkybox();
-    static unsigned int loadCubeMap(const std::vector<std::string>& faces);
+	void setupSkybox();
+	static unsigned int loadCubeMap(const std::vector<std::string>& Faces);
 
-    unsigned int vao;
-    unsigned int vbo;
-    unsigned int cubeMapTexture;
+	unsigned int Vao;
+	unsigned int Vbo;
+	unsigned int CubeMapTexture;
 };

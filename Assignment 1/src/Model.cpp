@@ -10,132 +10,148 @@
 #include <unordered_map>
 #include <fstream>
 
-Model::Model(const std::string& modelPath, const std::string& texturePath) {
-    this->directory = "resources/textures"; // Update directory for textures
-    loadModel(modelPath);
-    loadTexture(texturePath);
+Model::Model(const std::string& ModelPath, const std::string& TexturePath)
+{
+	this->MDirectory = "resources/textures"; // Update directory for textures
+	loadModel(ModelPath);
+	loadTexture(TexturePath);
 }
 
-void Model::draw(const Shader& shader) const {
-    for (const auto& mesh : meshes)
-        mesh.draw(shader);
+void Model::draw(const Shader& Shader) const
+{
+	for (const auto& Mesh : MMeshes)
+		Mesh.draw(Shader);
 }
 
-void Model::loadModel(const std::string& path) {
-    stbi_set_flip_vertically_on_load(true);
+void Model::loadModel(const std::string& Path)
+{
+	stbi_set_flip_vertically_on_load(true);
 
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
+	tinyobj::attrib_t Attrib;
+	std::vector<tinyobj::shape_t> Shapes;
+	std::vector<tinyobj::material_t> Materials;
+	std::string Warn, Err;
 
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str(), nullptr, true);
+	bool Ret = LoadObj(&Attrib, &Shapes, &Materials, &Warn, &Err, Path.c_str(), nullptr, true);
 
-    if (!warn.empty()) {
-        std::cout << "WARN: " << warn << '\n';
-    }
+	if (!Warn.empty())
+	{
+		std::cout << "WARN: " << Warn << '\n';
+	}
 
-    if (!err.empty()) {
-        std::cerr << err << '\n';
-    }
+	if (!Err.empty())
+	{
+		std::cerr << Err << '\n';
+	}
 
-    if (!ret) {
-        std::cerr << "Failed to load/parse .obj." << '\n';
-        return;
-    }
+	if (!Ret)
+	{
+		std::cerr << "Failed to load/parse .obj." << '\n';
+		return;
+	}
 
-    for (const auto& shape : shapes) {
-        std::vector<Vertex> vertices;
-        std::vector<unsigned int> indices;
-        std::vector<Texture> textures;
+	for (const auto& Shape : Shapes)
+	{
+		std::vector<Vertex> Vertices;
+		std::vector<unsigned int> Indices;
+		std::vector<Texture> Textures;
 
-        std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
+		std::unordered_map<Vertex, uint32_t> UniqueVertices = {};
 
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex = {};
+		for (const auto& Index : Shape.mesh.indices)
+		{
+			Vertex Vertex = {};
 
-            vertex.Position = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
+			Vertex.Position = {
+				Attrib.vertices[3 * Index.vertex_index + 0],
+				Attrib.vertices[3 * Index.vertex_index + 1],
+				Attrib.vertices[3 * Index.vertex_index + 2]
+			};
 
-            if (index.normal_index >= 0) {
-                vertex.Normal = {
-                    attrib.normals[3 * index.normal_index + 0],
-                    attrib.normals[3 * index.normal_index + 1],
-                    attrib.normals[3 * index.normal_index + 2]
-                };
-            }
+			if (Index.normal_index >= 0)
+			{
+				Vertex.Normal = {
+					Attrib.normals[3 * Index.normal_index + 0],
+					Attrib.normals[3 * Index.normal_index + 1],
+					Attrib.normals[3 * Index.normal_index + 2]
+				};
+			}
 
-            if (index.texcoord_index >= 0) {
-                vertex.TexCoords = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    attrib.texcoords[2 * index.texcoord_index + 1]
-                };
-            }
+			if (Index.texcoord_index >= 0)
+			{
+				Vertex.TexCoords = {
+					Attrib.texcoords[2 * Index.texcoord_index + 0],
+					Attrib.texcoords[2 * Index.texcoord_index + 1]
+				};
+			}
 
-            if (!uniqueVertices.contains(vertex)) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                vertices.push_back(vertex);
-            }
+			if (!UniqueVertices.contains(Vertex))
+			{
+				UniqueVertices[Vertex] = static_cast<uint32_t>(Vertices.size());
+				Vertices.push_back(Vertex);
+			}
 
-            indices.push_back(uniqueVertices[vertex]);
-        }
+			Indices.push_back(UniqueVertices[Vertex]);
+		}
 
-        Mesh mesh(vertices, indices, textures);
-        meshes.push_back(mesh);
-    }
+		Mesh LMesh(Vertices, Indices, Textures);
+		MMeshes.push_back(LMesh);
+	}
 }
 
-void Model::loadTexture(const std::string& path) {
-    const std::string fullPath = directory + '/' + path;
-    std::cout << "Loading texture: " << fullPath << '\n';
+void Model::loadTexture(const std::string& Path)
+{
+	const std::string FullPath = MDirectory + '/' + Path;
+	std::cout << "Loading texture: " << FullPath << '\n';
 
-    Texture texture;
-    texture.Id = textureFromFile(fullPath.c_str(), directory);
-    texture.Type = "texture_diffuse";
-    texture.Path = path;
-    loadedTextures.push_back(texture);
+	Texture LTexture;
+	LTexture.Id = textureFromFile(FullPath.c_str(), MDirectory);
+	LTexture.Type = "texture_diffuse";
+	LTexture.Path = Path;
+	MLoadedTextures.push_back(LTexture);
 
-    // Apply the texture to all meshes
-    for (auto& mesh : meshes) {
-        mesh.Textures.push_back(texture);
-    }
+	// Apply the texture to all meshes
+	for (auto& Mesh : MMeshes)
+	{
+		Mesh.Textures.push_back(LTexture);
+	}
 }
 
-unsigned int textureFromFile(const char* path, const std::string& directory, bool gamma) {
-    const auto filename = std::string(path);
+unsigned int textureFromFile(const char* Path, const std::string& Directory, bool Gamma)
+{
+	const auto Filename = std::string(Path);
 
-    unsigned int textureId;
-    glGenTextures(1, &textureId);
+	unsigned int TextureId;
+	glGenTextures(1, &TextureId);
 
-    int width, height, nrComponents;
-    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
-    if (data) {
-        GLenum format = 0;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
+	int Width, Height, NrComponents;
+	unsigned char* Data = stbi_load(Filename.c_str(), &Width, &Height, &NrComponents, 0);
+	if (Data)
+	{
+		GLenum Format = 0;
+		if (NrComponents == 1)
+			Format = GL_RED;
+		else if (NrComponents == 3)
+			Format = GL_RGB;
+		else if (NrComponents == 4)
+			Format = GL_RGBA;
 
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, TextureId);
+		glTexImage2D(GL_TEXTURE_2D, 0, Format, Width, Height, 0, Format, GL_UNSIGNED_BYTE, Data);
+		glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        stbi_image_free(data);
-    }
-    else {
-        std::cerr << "Texture failed to load at path: " << filename << '\n';
-        stbi_image_free(data);
-    }
+		stbi_image_free(Data);
+	}
+	else
+	{
+		std::cerr << "Texture failed to load at path: " << Filename << '\n';
+		stbi_image_free(Data);
+	}
 
-    return textureId;
+	return TextureId;
 }

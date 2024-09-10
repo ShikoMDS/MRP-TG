@@ -1,31 +1,25 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
-#include <glew.h> // Include GLEW for OpenGL function pointers
+#include <glew.h>
 #include <glm.hpp>
 #include <string>
 
-class Shader {
+class Shader
+{
 public:
-    unsigned int ID;
+	unsigned int Id;
 
-    // Constructor that builds the shader program from 2 different shaders
-    Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* VertexPath, const char* FragmentPath);
 
-    // Use/activate the shader
-    void use() const;
+	void use() const;
 
-    // Utility functions to set uniform variables
-    void setBool(const std::string& name, bool value) const;
-    void setInt(const std::string& name, int value) const;
-    void setFloat(const std::string& name, float value) const;
-    void setVec3(const std::string& name, const glm::vec3& value) const;
-    void setVec3(const std::string& name, float x, float y, float z) const;
-    void setMat4(const std::string& name, const glm::mat4& mat) const;
+	void setBool(const std::string& Name, bool Value) const;
+	void setInt(const std::string& Name, int Value) const;
+	void setFloat(const std::string& Name, float Value) const;
+	void setVec3(const std::string& Name, const glm::vec3& Value) const;
+	void setVec3(const std::string& Name, float X, float Y, float Z) const;
+	void setMat4(const std::string& Name, const glm::mat4& Mat) const;
 
 private:
-    // Utility function to check and report compile errors
-    void checkCompileErrors(unsigned int shader, const std::string& type);
+	static void checkCompileErrors(unsigned int Shader, const std::string& Type);
 };
-
-#endif // SHADER_H

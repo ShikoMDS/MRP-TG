@@ -1,73 +1,96 @@
 #include "InputManager.h"
 
-InputManager* InputManager::instance = nullptr;
+InputManager* InputManager::MInstance = nullptr;
 
 InputManager::InputManager(Camera& Camera, LightManager& LightManager)
-    : MCamera(Camera), MLightManager(LightManager), MFirstMouse(true), MLastX(400), MLastY(300) {
-    instance = this; // Set static instance
+	: MCamera(Camera), MLightManager(LightManager), MFirstMouse(true), MLastX(400), MLastY(300)
+{
+	MInstance = this; // Set static instance for callback access
 }
 
-void InputManager::processInput(GLFWwindow* Window, float DeltaTime) {
-    if (glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(Window, true);
-
-    // Camera movement handling
-    if (glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
-        MCamera.processKeyboard(FORWARD, DeltaTime);
-    if (glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
-        MCamera.processKeyboard(BACKWARD, DeltaTime);
-    if (glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
-        MCamera.processKeyboard(LEFT, DeltaTime);
-    if (glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
-        MCamera.processKeyboard(RIGHT, DeltaTime);
-    if (glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
-        MCamera.processKeyboard(UP, DeltaTime); // Move up
-    if (glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
-        MCamera.processKeyboard(DOWN, DeltaTime); // Move down
-
-    // Scene switching logic using number keys
-    if (glfwGetKey(Window, GLFW_KEY_1) == GLFW_PRESS) {
-        std::cout << "Switching to Scene 1: Stencil Test" << std::endl;
-        // Logic to switch to Scene 1
-    }
-    if (glfwGetKey(Window, GLFW_KEY_2) == GLFW_PRESS) {
-        std::cout << "Switching to Scene 2: Terrain Rendering" << std::endl;
-        // Logic to switch to Scene 2
-    }
-    if (glfwGetKey(Window, GLFW_KEY_3) == GLFW_PRESS) {
-        std::cout << "Switching to Scene 3: Perlin Noise Generation" << std::endl;
-        // Logic to switch to Scene 3
-    }
-    if (glfwGetKey(Window, GLFW_KEY_4) == GLFW_PRESS) {
-        std::cout << "Switching to Scene 4: Post-Processing" << std::endl;
-        // Logic to switch to Scene 4
-    }
+void resetScene()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	// Reset states
 }
 
+void InputManager::processInput(GLFWwindow* Window, const float DeltaTime) const
+{
+	static Scene CurrentScene = SceneNone; // Track the active scene
 
-void InputManager::frameBufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+	if (glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(Window, true);
+
+	// Handle scene switching
+	if (glfwGetKey(Window, GLFW_KEY_1) == GLFW_PRESS)
+	{
+		CurrentScene = Scene1;
+		std::cout << "Switching to Scene 1: Stencil Test" << '\n';
+		resetScene(); // Reset the scene before switching
+	}
+	if (glfwGetKey(Window, GLFW_KEY_2) == GLFW_PRESS)
+	{
+		CurrentScene = Scene2;
+		std::cout << "Switching to Scene 2: Terrain Rendering" << '\n';
+		resetScene();
+	}
+	if (glfwGetKey(Window, GLFW_KEY_3) == GLFW_PRESS)
+	{
+		CurrentScene = Scene3;
+		std::cout << "Switching to Scene 3" << '\n';
+		resetScene();
+	}
+	if (glfwGetKey(Window, GLFW_KEY_4) == GLFW_PRESS)
+	{
+		CurrentScene = Scene4;
+		std::cout << "Switching to Scene 4" << '\n';
+		resetScene();
+	}
+
+	// Camera movement handling
+	if (glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
+		MCamera.processKeyboard(Forward, DeltaTime);
+	if (glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
+		MCamera.processKeyboard(Backward, DeltaTime);
+	if (glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
+		MCamera.processKeyboard(Left, DeltaTime);
+	if (glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
+		MCamera.processKeyboard(Right, DeltaTime);
+	if (glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
+		MCamera.processKeyboard(Up, DeltaTime);
+	if (glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
+		MCamera.processKeyboard(Down, DeltaTime);
 }
 
-void InputManager::mouseCallback(GLFWwindow* Window, double PosX, double PosY) {
-    if (instance) {
-        if (instance->MFirstMouse) {
-            instance->MLastX = static_cast<float>(PosX);
-            instance->MLastY = static_cast<float>(PosY);
-            instance->MFirstMouse = false;
-        }
-
-        float OffsetX = static_cast<float>(PosX) - instance->MLastX;
-        float OffsetY = instance->MLastY - static_cast<float>(PosY);
-        instance->MLastX = static_cast<float>(PosX);
-        instance->MLastY = static_cast<float>(PosY);
-
-        instance->MCamera.processMouseMovement(OffsetX, OffsetY);
-    }
+void InputManager::frameBufferSizeCallback(GLFWwindow* Window, const int Width, const int Height)
+{
+	glViewport(0, 0, Width, Height);
 }
 
-void InputManager::scrollCallback(GLFWwindow* Window, double OffsetX, double OffsetY) {
-    if (instance) {
-        instance->MCamera.processMouseScroll(static_cast<float>(OffsetY));
-    }
+void InputManager::mouseCallback(GLFWwindow* Window, const double PosX, const double PosY)
+{
+	if (MInstance)
+	{
+		if (MInstance->MFirstMouse)
+		{
+			MInstance->MLastX = static_cast<float>(PosX);
+			MInstance->MLastY = static_cast<float>(PosY);
+			MInstance->MFirstMouse = false;
+		}
+
+		const float OffsetX = static_cast<float>(PosX) - MInstance->MLastX;
+		const float OffsetY = MInstance->MLastY - static_cast<float>(PosY);
+		MInstance->MLastX = static_cast<float>(PosX);
+		MInstance->MLastY = static_cast<float>(PosY);
+
+		MInstance->MCamera.processMouseMovement(OffsetX, OffsetY);
+	}
+}
+
+void InputManager::scrollCallback(GLFWwindow* Window, double OffsetX, const double OffsetY)
+{
+	if (MInstance)
+	{
+		MInstance->MCamera.processMouseScroll(static_cast<float>(OffsetY));
+	}
 }

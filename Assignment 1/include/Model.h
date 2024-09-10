@@ -8,19 +8,20 @@
 #include <string>
 #include <vector>
 
-class Model {
+class Model
+{
 public:
-    Model(const std::string& modelPath, const std::string& texturePath);
+	Model(const std::string& ModelPath, const std::string& TexturePath);
 
-    void draw(const Shader& shader) const;
+	void draw(const Shader& Shader) const;
 
 private:
-    void loadModel(const std::string& path);
-    void loadTexture(const std::string& path);
+	void loadModel(const std::string& Path);
+	void loadTexture(const std::string& Path);
 
-    std::vector<Mesh> meshes;
-    std::string directory;
-    std::vector<Texture> loadedTextures;
+	std::vector<Mesh> MMeshes;
+	std::string MDirectory;
+	std::vector<Texture> MLoadedTextures;
 };
 
-unsigned int textureFromFile(const char* path, const std::string& directory, bool gamma = false);
+unsigned int textureFromFile(const char* Path, const std::string& Directory, bool Gamma = false);
